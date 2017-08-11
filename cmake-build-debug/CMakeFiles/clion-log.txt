@@ -1,0 +1,9 @@
+/opt/clion/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/tekatod/ClionProjects/CM_730_EMU
+-- Found V-REP installation at /usr/share/vrep.
+-- Checking V-REP header version...
+-- V-REP headers version 3.4.0 rev1
+-- Checking if V-REP has Qt3D...
+-- V-REP has no Qt3D
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/tekatod/ClionProjects/CM_730_EMU/cmake-build-debug
