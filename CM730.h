@@ -128,6 +128,8 @@ namespace Robot {
 
     private:
 
+        int BulkReadJoints();
+
         void init_devices();
 
         int connect_device(std::string device_name);

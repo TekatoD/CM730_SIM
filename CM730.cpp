@@ -8,13 +8,15 @@ extern "C" {
 }
 
 #include <iostream>
+#include <chrono>
+#include <thread>
 #include "CM730.h"
 #include "JointData.h"
 
 Robot::BulkReadData::BulkReadData()
         :
         start_address(0),
-        length(0),
+        length(MX28::MAXNUM_ADDRESS),
         error(-1) {
     for (int i = 0; i < MX28::MAXNUM_ADDRESS; i++)
         table[i] = 0;
@@ -50,6 +52,7 @@ Robot::CM730::CM730(std::string server_ip, int server_port, int client_id, std::
     for (int i = 0; i < ID_BROADCAST; i++) {
         m_BulkReadData[i] = BulkReadData();
     }
+//    this->BulkRead();
 }
 
 Robot::CM730::CM730(int client_id, std::string device_postfix) {
@@ -66,8 +69,10 @@ Robot::CM730::CM730(int client_id, std::string device_postfix) {
     }
     m_device_postfix = device_postfix;
     init_devices();
-    for (int i = 0; i < ID_BROADCAST; i++)
+    for (int i = 0; i < ID_BROADCAST; i++) {
         m_BulkReadData[i] = BulkReadData();
+    }
+//    this->BulkRead();
 }
 
 void Robot::CM730::init_devices() {
@@ -125,6 +130,9 @@ int Robot::CM730::SyncWrite(int start_addr, int each_length, int number, int *pP
                                       (Robot::MX28::Value2Angle(CM730::MakeWord(pParam[i + 5], pParam[i + 6])) * M_PI) / 180, simx_opmode_oneshot);
 
     }
+//    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//    this->BulkReadJoints();
+//    std::this_thread::sleep_for(std::chrono::milliseconds(150));
 }
 
 int Robot::CM730::ReadWord(int id, int address, int* pValue, int* error) {
@@ -233,6 +241,20 @@ int Robot::CM730::BulkRead() {
         if(error == simx_return_ok) {
             m_BulkReadData->error = 0;
         }
+    }
+}
+
+int Robot::CM730::BulkReadJoints() {
+    for(size_t i = JointData::ID_R_SHOULDER_PITCH; i < JointData::NUMBER_OF_JOINTS; ++i) {
+        int value;
+        int error;
+        this->ReadWord(0, i, &value, &error);
+        m_BulkReadData[i].table[MX28::P_PRESENT_POSITION_L] = GetLowByte(value);
+        m_BulkReadData[i].table[MX28::P_PRESENT_POSITION_H] = GetHighByte(value);
+        if(error == simx_return_ok) {
+            m_BulkReadData->error = 0;
+        }
+
     }
 }
 

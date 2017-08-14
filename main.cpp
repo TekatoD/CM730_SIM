@@ -11,6 +11,78 @@
 #include <thread>
 #include <time.h>
 
+bool ComputeLegForwardKinematics(float* out, float pelvis, float tight_roll,
+                                             float tight_pitch, float knee_pitch,
+                                             float ankle_pitch, float ankle_roll) {
+
+    const float CAMERA_DISTANCE = 33.2; //mm
+    const float EYE_TILT_OFFSET_ANGLE = 40.0; //degree
+    const float LEG_SIDE_OFFSET = 37.0; //mm
+    const float THIGH_LENGTH = 93.0; //mm
+    const float CALF_LENGTH = 93.0; //mm
+    const float ANKLE_LENGTH = 33.5; //mm
+    const float LEG_LENGTH = 219.5; //mm (THIGH_LENGTH + CALF_LENGTH + ANKLE_LENGTH)
+
+
+    const float s1 = (float) sin(pelvis);
+    const float c1 = (float) cos(pelvis);
+
+    const float s2 = (float) sin(tight_roll);
+    const float c2 = (float) cos(tight_roll);
+
+    const float s3 = (float) sin(tight_pitch);
+    const float c3 = (float) cos(tight_pitch);
+
+    const float s4 = (float) sin(knee_pitch);
+    const float c4 = (float) cos(knee_pitch);
+
+    const float s5 = (float) sin(ankle_pitch);
+    const float c5 = (float) cos(ankle_pitch);
+
+    const float s6 = (float) sin(ankle_roll);
+    const float c6 = (float) cos(ankle_roll);
+
+
+    const float s1c3 = s1 * c3;
+    const float c4c5 = c4 * c5;
+    const float s4s5 = s4 * s5;
+    const float s1s3 = s1 * s3;
+    const float s4c5 = s4 * c5;
+    const float c4s5 = c4 * s5;
+    const float mc4c5 = -c4 * c5;
+    const float ms4c5 = -s4 * c5;
+    const float c1c2c3 = c1 * c2 * c3;
+    const float ms3c1c2 = -s3 * c1 * c2;
+    const float c1s2 = c1 * s2;
+
+    const float ms2s3 = -s2 * s3;
+    const float s2c3 = s2 * c3;
+
+    float r11 = (c1c2c3 - s1s3) * (c4c5 - s4s5) * c6 + (ms3c1c2 - s1c3) * (s4c5 + c4s5) * c6 - c1s2 * s6;
+    float r12 = (c1c2c3 - s1s3) * (mc4c5 + s4s5) * s6 + (ms3c1c2 - s1c3) * (ms4c5 - c4s5) * s6 - c1s2 * c6;
+    float r13 = (c1c2c3 - s1s3) * (c4s5 + s4c5) + (ms3c1c2 - s1c3) * (s4s5 - c4c5);
+
+    float r31 = (s2c3 * c6) * (c4c5 - s4s5) + ms2s3 * (s4c5 + c4s5) * c6 + c2 * s6;
+    float r32 = (s2c3 * s6) * (mc4c5 + s4s5) + ms2s3 * (ms4c5 - c4s5) * s6 + c2 * c6;
+    float r33 = s2c3 * (c4s5 + s4c5) + ms2s3 * (s4s5 - c4c5);
+
+    float r21 = r12 * r33 - r13 * r32;
+    float r22 = r13 * r31 - r11 * r33;
+    float r23 = r11 * r32 - r12 * r31;
+
+    float px = (c1c2c3 - s1s3) * (c4 * CALF_LENGTH + THIGH_LENGTH) +
+               (ms3c1c2 - s1c3) * (s4 * CALF_LENGTH) +
+               r11 * ANKLE_LENGTH;
+    float py = (s1 * c2 * c3 + c1 * s3) * (c4 * CALF_LENGTH + THIGH_LENGTH) +
+               (-s3 * s1 * c2 + c1 * c3) * (s4 * CALF_LENGTH) +
+               r12 * ANKLE_LENGTH;
+    float pz = s2c3 * (c4 * CALF_LENGTH + THIGH_LENGTH) +
+               ms2s3 * (s4 * CALF_LENGTH) +
+               r13 * ANKLE_LENGTH;
+
+    std::cout << px << " " << py << " " << pz;
+}
+
 int main() {
     Robot::CM730 cm730;
     Robot::CM730 cm7301(cm730.get_client_id(), "#0");
@@ -51,28 +123,41 @@ int main() {
         while (num1 < Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES) {
             params1[num1++] = 0;
         }
-
-        cm730.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum, params);
-        cm7301.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum1, params1);
-        int ret;
-        int val;
-    int adr = Robot::CM730::P_GYRO_Z_L;
-    int adr1 = Robot::CM730::P_GYRO_Y_L;
-    int adr2 = Robot::CM730::P_GYRO_X_L;
-//        int adr = Robot::JointData::ID_HEAD_TILT;
-//        cm730.ReadWord(0, adr, &val, &ret);
-//        cm730.ReadWord(0, adr1, &val, &ret);
-//        cm730.ReadWord(0, adr2, &val, &ret);
         clock_t tStart = clock();
-        cm730.BulkRead();
-        printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+        cm730.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum, params);
+        printf("Time taken: %.4fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+        cm7301.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum1, params1);
+//        int ret;
+//        int val;
+//    int adr = Robot::CM730::P_ACCEL_Z_L;
+//    int adr1 = Robot::CM730::P_ACCEL_Y_L;
+//    int adr2 = Robot::CM730::P_ACCEL_X_L;
+//        cm730.BulkRead();
+//        std::cout << "Gyro z: " << cm730.m_BulkReadData[Robot::CM730::ID_CM].ReadWord(adr) << std::endl;
+//        std::cout << "Gyro y: " << cm730.m_BulkReadData[Robot::CM730::ID_CM].ReadWord(adr1) << std::endl;
+//        std::cout << "Gyro x: " << cm730.m_BulkReadData[Robot::CM730::ID_CM].ReadWord(adr2) << std::endl;
+////        int adr = Robot::JointData::ID_HEAD_TILT;
+//        clock_t tStart = clock();
+//        cm7301.BulkRead();
+//        printf("Time taken: %.4fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 //        std::this_thread::sleep_for(std::chrono::milliseconds(300));
     }
+
+
+    cm730.BulkRead();
+    ComputeLegForwardKinematics(NULL,
+                                (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_HIP_YAW ].ReadWord(Robot::MX28::P_PRESENT_POSITION_L)) * M_PI) / 180,
+                                (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_HIP_ROLL].ReadWord(Robot::MX28::P_PRESENT_POSITION_L)) * M_PI) / 180,
+                                                          (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_HIP_PITCH].ReadWord(Robot::MX28::P_PRESENT_POSITION_L)) * M_PI) / 180,
+                                                                                    (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_KNEE].ReadWord(Robot::MX28::P_PRESENT_POSITION_L)) * M_PI) / 180,
+                                                                                                              (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_ANKLE_PITCH].ReadWord(Robot::MX28::P_PRESENT_POSITION_L)) * M_PI) / 180,
+                                                                                                                                        (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_ANKLE_ROLL].ReadWord(Robot::MX28::P_PRESENT_POSITION_L))) * M_PI) / 180;
+
     int ret;
     int val;
 //    int adr = Robot::CM730::P_ACCEL_Z_L;
-    int adr = Robot::JointData::ID_HEAD_TILT;
-    cm730.ReadWord(0, adr, &val, &ret);
+//    int adr = Robot::JointData::ID_HEAD_TILT;
+//    cm730.ReadWord(0, adr, &val, &ret);
 
     return 0;
 }
