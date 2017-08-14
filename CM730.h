@@ -124,6 +124,8 @@ namespace Robot {
 
         static int GetHighByte(int word);
 
+        ~CM730();
+
     private:
 
         void init_devices();

@@ -9,6 +9,7 @@
 #include "CM730.h"
 #include <chrono>
 #include <thread>
+#include <time.h>
 
 int main() {
     Robot::CM730 cm730;
@@ -53,7 +54,19 @@ int main() {
 
         cm730.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum, params);
         cm7301.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum1, params1);
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        int ret;
+        int val;
+    int adr = Robot::CM730::P_GYRO_Z_L;
+    int adr1 = Robot::CM730::P_GYRO_Y_L;
+    int adr2 = Robot::CM730::P_GYRO_X_L;
+//        int adr = Robot::JointData::ID_HEAD_TILT;
+//        cm730.ReadWord(0, adr, &val, &ret);
+//        cm730.ReadWord(0, adr1, &val, &ret);
+//        cm730.ReadWord(0, adr2, &val, &ret);
+        clock_t tStart = clock();
+        cm730.BulkRead();
+        printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+//        std::this_thread::sleep_for(std::chrono::milliseconds(300));
     }
     int ret;
     int val;

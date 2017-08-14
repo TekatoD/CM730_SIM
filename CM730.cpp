@@ -128,47 +128,86 @@ int Robot::CM730::SyncWrite(int start_addr, int each_length, int number, int *pP
 }
 
 int Robot::CM730::ReadWord(int id, int address, int* pValue, int* error) {
-        auto get_gyro_data = [this](int ind) {
+        simxFloat* gyroData = nullptr;
+        simxFloat* accelData = nullptr;
+        auto get_gyro_data = [this, &gyroData](int ind) {
             simxInt retCount;
-            simxFloat* data;
             simxCallScriptFunction(m_client_id, "Gyro", sim_scripttype_childscript, "getGyroData", NULL, NULL, NULL, NULL, NULL,
                                    NULL,NULL, NULL, NULL, NULL, &retCount,
-            &data, NULL, NULL, NULL, NULL, simx_opmode_oneshot_wait);
-            return data[ind];
+            &gyroData, NULL, NULL, NULL, NULL, simx_opmode_oneshot_wait);
+            return gyroData[ind];
         };
-        auto get_accel_data = [this](int ind) {
+        auto get_accel_data = [this, &accelData](int ind) {
             simxInt retCount;
-            simxFloat* data;
             simxCallScriptFunction(m_client_id, "Accelerometer", sim_scripttype_childscript, "getAccelData", NULL, NULL, NULL, NULL, NULL,
                                    NULL,NULL, NULL, NULL, NULL, &retCount,
-                                   &data, NULL, NULL, NULL, NULL, simx_opmode_oneshot_wait);
-            return data[ind];
+                                   &accelData, NULL, NULL, NULL, NULL, simx_opmode_oneshot_wait);
+            return accelData[ind];
         };
+        auto norm_accel = [](double value) {
+            return (int)((value + 39.24) / (78.48) * 1023);
+        };
+        auto norm_gyro = [](double value) {
+            return (int)((value + 500) / (1000) * 1023);
+        };
+        double val = 0;
         switch(address) {
             case P_GYRO_Z_L:
-                get_gyro_data(2);
+                if(gyroData == nullptr) {
+                    *pValue = norm_gyro(get_gyro_data(2));
+                }
+                else {
+                    *pValue = norm_gyro(gyroData[2]);
+                }
                 break;
             case P_GYRO_Y_L:
-                get_gyro_data(1);
+                if(gyroData == nullptr) {
+                    *pValue = norm_gyro(get_gyro_data(1));
+                }
+                else {
+                    *pValue = norm_gyro(gyroData[1]);
+                }
                 break;
             case P_GYRO_X_L:
-                get_gyro_data(0);
+                if(gyroData == nullptr) {
+                    *pValue = norm_gyro(get_gyro_data(0));
+                }
+                else {
+                    *pValue = norm_gyro(gyroData[0]);
+                }
                 break;
             case P_ACCEL_Z_L:
-                std::cout << "accel z" << get_accel_data(2);
+                if(accelData == nullptr) {
+                    *pValue = norm_accel(get_accel_data(2));
+                }
+                else {
+                    *pValue = norm_accel(accelData[2]);
+                }
                 break;
             case P_ACCEL_Y_L:
-                std::cout << "accel y" <<get_accel_data(1);
+                if(accelData == nullptr) {
+                    *pValue = norm_accel(get_accel_data(1));
+                }
+                else {
+                    *pValue = norm_accel(accelData[1]);
+                }
                 break;
             case P_ACCEL_X_L:
-                std::cout << "accel x" <<get_accel_data(0);
+                if(accelData == nullptr) {
+                    *pValue = norm_accel(get_accel_data(0));
+                }
+                else {
+                    *pValue = norm_accel(accelData[0]);
+                }
                 break;
             default:
                 simxFloat pos;
-                *error = simxGetJointPosition(m_client_id, m_emu_devices[address], &pos, simx_opmode_oneshot_wait);
+                simxSetObjectIntParameter(m_client_id, m_emu_devices[address], 2000, 1, simx_opmode_oneshot);
+                simxSetObjectIntParameter(m_client_id, m_emu_devices[address], 2001, 1, simx_opmode_oneshot);
+                *error = simxGetJointPosition(m_client_id, m_emu_devices[address], &pos, simx_opmode_oneshot);
                 pos = (180 * pos) / M_PI;
                 *pValue = MX28::Angle2Value(pos);
-                std::cout << pos << std::endl;
+//                std::cout << pos << std::endl;
                 return SUCCESS;
     }
 }
@@ -219,4 +258,8 @@ int Robot::CM730::GetHighByte(int word) {
     unsigned short temp;
     temp = word & 0xff00;
     return (int) (temp >> 8);
+}
+
+Robot::CM730::~CM730() {
+    simxStopSimulation(m_client_id, simx_opmode_oneshot_wait);
 }
