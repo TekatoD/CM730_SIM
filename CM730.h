@@ -108,6 +108,15 @@ namespace Robot {
 
         CM730(std::string server_ip, int server_port, int client_id = -1, std::string device_postfix = "");
 
+        //This is dummy for now it's do nothing
+        int WriteByte(int address, int value, int* error);
+
+        //This is dummy for now it's do nothing
+        int WriteWord(int id, int address, int value, int* error);
+
+        //This is dummy for now it's do nothing
+        int ReadByte(int id, int address, int* pValue, int* error);
+
         //Note: This works only with joints
         int SyncWrite(int start_addr, int each_length, int number, int *pParam);
 
@@ -127,8 +136,6 @@ namespace Robot {
         ~CM730();
 
     private:
-
-        int BulkReadJoints();
 
         void init_devices();
 

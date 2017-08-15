@@ -76,6 +76,7 @@ Robot::CM730::CM730(int client_id, std::string device_postfix) {
 }
 
 void Robot::CM730::init_devices() {
+    m_emu_devices.reserve(22);
     for(size_t i = P_GYRO_Z_L; i < P_ACCEL_X_H; ++i) {
         m_emu_devices.emplace(std::make_pair(i, this->connect_device("Gyro"  + m_device_postfix)));
     }
@@ -216,7 +217,7 @@ int Robot::CM730::ReadWord(int id, int address, int* pValue, int* error) {
                       != simx_return_ok) { };
                 pos = (180 * pos) / M_PI;
                 *pValue = MX28::Angle2Value(pos);
-                std::cout << pos << std::endl;
+//                std::cout << pos << std::endl;
                 return SUCCESS;
     }
 }
@@ -245,19 +246,21 @@ int Robot::CM730::BulkRead() {
     }
 }
 
-int Robot::CM730::BulkReadJoints() {
-    for(size_t i = JointData::ID_R_SHOULDER_PITCH; i < JointData::NUMBER_OF_JOINTS; ++i) {
-        int value;
-        int error;
-        this->ReadWord(0, i, &value, &error);
-        m_BulkReadData[i].table[MX28::P_PRESENT_POSITION_L] = GetLowByte(value);
-        m_BulkReadData[i].table[MX28::P_PRESENT_POSITION_H] = GetHighByte(value);
-        if(error == simx_return_ok) {
-            m_BulkReadData->error = 0;
-        }
-
-    }
+int Robot::CM730::WriteByte(int address, int value, int* error) {
+    return SUCCESS;
 }
+
+int Robot::CM730::WriteWord(int id, int address, int value, int* error) {
+    return SUCCESS;
+}
+
+int Robot::CM730::ReadByte(int id, int address, int *pValue, int* error) {
+    if(address == MX28::P_VERSION) {
+        *pValue = 28;
+    }
+    return SUCCESS;
+}
+
 
 int Robot::CM730::MakeWord(int lowbyte, int highbyte) {
     unsigned short word;
