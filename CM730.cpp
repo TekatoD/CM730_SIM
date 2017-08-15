@@ -212,10 +212,11 @@ int Robot::CM730::ReadWord(int id, int address, int* pValue, int* error) {
                 simxFloat pos;
                 simxSetObjectIntParameter(m_client_id, m_emu_devices[address], 2000, 1, simx_opmode_oneshot);
                 simxSetObjectIntParameter(m_client_id, m_emu_devices[address], 2001, 1, simx_opmode_oneshot);
-                *error = simxGetJointPosition(m_client_id, m_emu_devices[address], &pos, simx_opmode_oneshot);
+                while((*error = simxGetJointPosition(m_client_id, m_emu_devices[address], &pos, simx_opmode_oneshot))
+                      != simx_return_ok) { };
                 pos = (180 * pos) / M_PI;
                 *pValue = MX28::Angle2Value(pos);
-//                std::cout << pos << std::endl;
+                std::cout << pos << std::endl;
                 return SUCCESS;
     }
 }

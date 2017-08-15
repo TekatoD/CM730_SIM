@@ -70,63 +70,112 @@ bool ComputeLegForwardKinematics(float* out, float pelvis, float tight_roll,
     float r22 = r13 * r31 - r11 * r33;
     float r23 = r11 * r32 - r12 * r31;
 
-    float px = (c1c2c3 - s1s3) * (c4 * CALF_LENGTH + THIGH_LENGTH) +
-               (ms3c1c2 - s1c3) * (s4 * CALF_LENGTH) +
-               r11 * ANKLE_LENGTH;
+    float px = s2c3 * (c4 * CALF_LENGTH + THIGH_LENGTH) +
+               ms2s3 * (s4 * CALF_LENGTH) +
+               r13 * ANKLE_LENGTH;
     float py = (s1 * c2 * c3 + c1 * s3) * (c4 * CALF_LENGTH + THIGH_LENGTH) +
                (-s3 * s1 * c2 + c1 * c3) * (s4 * CALF_LENGTH) +
                r12 * ANKLE_LENGTH;
-    float pz = s2c3 * (c4 * CALF_LENGTH + THIGH_LENGTH) +
-               ms2s3 * (s4 * CALF_LENGTH) +
-               r13 * ANKLE_LENGTH;
+    float pz = (c1c2c3 - s1s3) * (c4 * CALF_LENGTH + THIGH_LENGTH) +
+                                  (ms3c1c2 - s1c3) * (s4 * CALF_LENGTH) +
+                                  r11 * ANKLE_LENGTH;
 
-    std::cout << px << " " << py << " " << pz;
+    std::cout << px << " " << py << " " << pz << std::endl;
+}
+
+void ComputeHeadForwardKinematics(float pan, float tilt) {
+    const float CAMERA_OFFSET_X = 33.2;
+    const float CAMERA_OFFSET_Z = 34.4;
+    // todo check order of angles
+    const float s1 = sinf(pan);
+    const float c1 = cosf(pan);
+    const float s2 = sinf(tilt);
+    const float c2 = cosf(tilt);
+
+    const float r11 = c1 * c2;
+    const float r12 = -c1 * s2;
+    const float r13 = -s1;
+
+    const float r31 = s1 * c2;
+    const float r32 = -s1 * s2;
+    const float r33 = c1;
+
+    const float r21 = -s2;
+    const float r22 = -c2;
+    const float r23 = 0.0f;
+
+    const float px = r11 * CAMERA_OFFSET_X + r13 * CAMERA_OFFSET_Z;
+    const float py = r21 * CAMERA_OFFSET_X + r23 * CAMERA_OFFSET_Z;
+    const float pz = r31 * CAMERA_OFFSET_X + r33 * CAMERA_OFFSET_Z;
+
+    std::cout << px << " " << py << " " << pz << std::endl;
 }
 
 int main() {
     Robot::CM730 cm730;
     Robot::CM730 cm7301(cm730.get_client_id(), "#0");
     double angle = 15;
-    while(true) {
-        int params[Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES];
-        int num = 0;
-        int jointNum = 0;
-        angle *= -1;
-        for (size_t i = 1; i < Robot::JointData::NUMBER_OF_JOINTS; ++i) {
-            params[num++] = i;
-            params[num++] = 0;
-            params[num++] = 0;
-            params[num++] = 32;
-            params[num++] = 0;
-            params[num++] = Robot::CM730::GetLowByte(Robot::MX28::Angle2Value(angle));
-            params[num++] = Robot::CM730::GetHighByte(Robot::MX28::Angle2Value(angle));
-            jointNum++;
-        }
-        while (num < Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES) {
-            params[num++] = 0;
-        }
-
-        int params1[Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES];
-        int num1 = 0;
-        int jointNum1 = 0;
-        double angle1 = 15;
-        for (size_t i = 1; i < Robot::JointData::NUMBER_OF_JOINTS; ++i) {
-            params1[num1++] = i;
-            params1[num1++] = 0;
-            params1[num1++] = 0;
-            params1[num1++] = 32;
-            params1[num1++] = 0;
-            params1[num1++] = Robot::CM730::GetLowByte(Robot::MX28::Angle2Value(angle));
-            params1[num1++] = Robot::CM730::GetHighByte(Robot::MX28::Angle2Value(angle));
-            jointNum1++;
-        }
-        while (num1 < Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES) {
-            params1[num1++] = 0;
-        }
-        clock_t tStart = clock();
-        cm730.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum, params);
-        printf("Time taken: %.4fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
-        cm7301.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum1, params1);
+    int params[Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES];
+    int num = 0;
+    int jointNum = 0;
+    angle *= -1;
+    for (size_t i = 1; i < Robot::JointData::NUMBER_OF_JOINTS; ++i) {
+        params[num++] = i;
+        params[num++] = 0;
+        params[num++] = 0;
+        params[num++] = 32;
+        params[num++] = 0;
+        params[num++] = Robot::CM730::GetLowByte(Robot::MX28::Angle2Value(angle));
+        params[num++] = Robot::CM730::GetHighByte(Robot::MX28::Angle2Value(angle));
+        jointNum++;
+    }
+    while (num < Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES) {
+        params[num++] = 0;
+    }
+    cm730.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum, params);
+//    while(true) {
+//        int params[Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES];
+//        int num = 0;
+//        int jointNum = 0;
+//        angle *= -1;
+//        for (size_t i = 1; i < Robot::JointData::NUMBER_OF_JOINTS; ++i) {
+//            params[num++] = i;
+//            params[num++] = 0;
+//            params[num++] = 0;
+//            params[num++] = 32;
+//            params[num++] = 0;
+//            params[num++] = Robot::CM730::GetLowByte(Robot::MX28::Angle2Value(angle));
+//            params[num++] = Robot::CM730::GetHighByte(Robot::MX28::Angle2Value(angle));
+//            jointNum++;
+//        }
+//        while (num < Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES) {
+//            params[num++] = 0;
+//        }
+//
+//        int params1[Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES];
+//        int num1 = 0;
+//        int jointNum1 = 0;
+//        double angle1 = 15;
+//        for (size_t i = 1; i < Robot::JointData::NUMBER_OF_JOINTS; ++i) {
+//            params1[num1++] = i;
+//            params1[num1++] = 0;
+//            params1[num1++] = 0;
+//            params1[num1++] = 32;
+//            params1[num1++] = 0;
+//            params1[num1++] = Robot::CM730::GetLowByte(Robot::MX28::Angle2Value(angle));
+//            params1[num1++] = Robot::CM730::GetHighByte(Robot::MX28::Angle2Value(angle));
+//            jointNum1++;
+//        }
+//        while (num1 < Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES) {
+//            params1[num1++] = 0;
+//        }
+//        clock_t tStart = clock();
+//        cm730.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum, params);
+//        printf("Time taken: %.4fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+//        tStart = clock();
+//        cm730.BulkRead();
+//        printf("Time taken: %.4fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+//        cm7301.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum1, params1);
 //        int ret;
 //        int val;
 //    int adr = Robot::CM730::P_ACCEL_Z_L;
@@ -141,7 +190,7 @@ int main() {
 //        cm7301.BulkRead();
 //        printf("Time taken: %.4fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
 //        std::this_thread::sleep_for(std::chrono::milliseconds(300));
-    }
+//    }
 
 
     cm730.BulkRead();
@@ -151,10 +200,14 @@ int main() {
                                                           (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_HIP_PITCH].ReadWord(Robot::MX28::P_PRESENT_POSITION_L)) * M_PI) / 180,
                                                                                     (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_KNEE].ReadWord(Robot::MX28::P_PRESENT_POSITION_L)) * M_PI) / 180,
                                                                                                               (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_ANKLE_PITCH].ReadWord(Robot::MX28::P_PRESENT_POSITION_L)) * M_PI) / 180,
-                                                                                                                                        (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_ANKLE_ROLL].ReadWord(Robot::MX28::P_PRESENT_POSITION_L))) * M_PI) / 180;
+                                ((Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_L_ANKLE_ROLL].ReadWord(Robot::MX28::P_PRESENT_POSITION_L))) * M_PI) / 180);
+
+    ComputeHeadForwardKinematics((Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_HEAD_PAN].ReadWord(Robot::MX28::P_PRESENT_POSITION_L)) * M_PI) / 180,
+                                 (Robot::MX28::Value2Angle(cm730.m_BulkReadData[Robot::JointData::ID_HEAD_TILT ].ReadWord(Robot::MX28::P_PRESENT_POSITION_L)) * M_PI) / 180);
 
     int ret;
     int val;
+    std::this_thread::sleep_for(std::chrono::milliseconds(60000));
 //    int adr = Robot::CM730::P_ACCEL_Z_L;
 //    int adr = Robot::JointData::ID_HEAD_TILT;
 //    cm730.ReadWord(0, adr, &val, &ret);
