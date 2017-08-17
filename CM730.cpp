@@ -201,6 +201,7 @@ int Robot::CM730::BulkRead() {
             m_BulkReadData->error = 0;
         }
     }
+    m_BulkReadData[ID_CM].error = 0; //TODO:: crutchk
 //    ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - tp);
 //    std::cout << "Sensors: " << ms.count() << std::endl;
 }
