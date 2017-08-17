@@ -108,14 +108,20 @@ namespace Robot {
 
         CM730(std::string server_ip, int server_port, int client_id = -1, std::string device_postfix = "");
 
-        //This is dummy for now it's do nothing
+        //This is dummy for now it can do nothing
         int WriteByte(int address, int value, int* error);
 
-        //This is dummy for now it's do nothing
+        //This is dummy for now it can do nothing
         int WriteWord(int id, int address, int value, int* error);
 
-        //This is dummy for now it's do nothing
+        //This is dummy for now it can do nothing
         int ReadByte(int id, int address, int* pValue, int* error);
+
+        //This is dummy for now it can do nothing
+        bool Connect();
+
+        //This is dummy for now it can do nothing
+        void DXLPowerOn();
 
         //Note: This works only with joints
         int SyncWrite(int start_addr, int each_length, int number, int *pParam);
@@ -143,6 +149,6 @@ namespace Robot {
 
         int m_client_id;
         std::string m_device_postfix;
-        std::unordered_map<int, int> m_emu_devices;
+        std::unordered_map<int, int> m_sim_devices;
     };
 }
