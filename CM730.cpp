@@ -164,9 +164,9 @@ int Robot::CM730::ReadWord(int id, int address, int* pValue, int* error) {
                 break;
             default:
                 simxFloat pos;
-                simxSetObjectIntParameter(m_client_id, m_sim_devices[address], 2000, 1, simx_opmode_oneshot);
-                simxSetObjectIntParameter(m_client_id, m_sim_devices[address], 2001, 1, simx_opmode_oneshot);
-                while((*error = simxGetJointPosition(m_client_id, m_sim_devices[address], &pos, simx_opmode_oneshot))
+                simxSetObjectIntParameter(m_client_id, m_sim_devices[id], 2000, 1, simx_opmode_oneshot);
+                simxSetObjectIntParameter(m_client_id, m_sim_devices[id], 2001, 1, simx_opmode_oneshot);
+                while((*error = simxGetJointPosition(m_client_id, m_sim_devices[id], &pos, simx_opmode_oneshot))
                       != simx_return_ok) { };
                 pos = (180 * pos) / M_PI;
 //                std::cout << "Joint" << address << " " << pos << std::endl;
@@ -180,7 +180,7 @@ int Robot::CM730::BulkRead() {
     for(size_t i = JointData::ID_R_SHOULDER_PITCH; i < JointData::NUMBER_OF_JOINTS; ++i) {
         int value;
         int error;
-        this->ReadWord(0, i, &value, &error);
+        this->ReadWord(i, 0, &value, &error);
         m_BulkReadData[i].table[MX28::P_PRESENT_POSITION_L] = GetLowByte(value);
         m_BulkReadData[i].table[MX28::P_PRESENT_POSITION_H] = GetHighByte(value);
         if(error == simx_return_ok) {

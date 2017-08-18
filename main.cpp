@@ -114,28 +114,30 @@ void ComputeHeadForwardKinematics(float pan, float tilt) {
 int main() {
     Robot::CM730 cm730;
 //    Robot::CM730 cm7301(cm730.get_client_id(), "#0");
-    int joint_to_test = 20;
-    double angle = 30;
-    for(size_t i = 0; i < 2; ++i) {
-        int params[Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES];
-        int num = 0;
-        int jointNum = 0;
-        angle *= -1;
-        for (size_t i = joint_to_test; i < joint_to_test + 1; ++i) {
-            params[num++] = i;
-            params[num++] = 0;
-            params[num++] = 0;
-            params[num++] = 32;
-            params[num++] = 0;
-            params[num++] = Robot::CM730::GetLowByte(Robot::MX28::Angle2Value(angle));
-            params[num++] = Robot::CM730::GetHighByte(Robot::MX28::Angle2Value(angle));
-            jointNum++;
+    while(true) {
+        int joint_to_test = 20;
+        double angle = 30;
+        for (size_t i = 0; i < 2; ++i) {
+            int params[Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES];
+            int num = 0;
+            int jointNum = 0;
+            angle *= -1;
+            for (size_t i = joint_to_test; i < joint_to_test + 1; ++i) {
+                params[num++] = i;
+                params[num++] = 0;
+                params[num++] = 0;
+                params[num++] = 32;
+                params[num++] = 0;
+                params[num++] = Robot::CM730::GetLowByte(Robot::MX28::Angle2Value(angle));
+                params[num++] = Robot::CM730::GetHighByte(Robot::MX28::Angle2Value(angle));
+                jointNum++;
+            }
+            while (num < Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES) {
+                params[num++] = 0;
+            }
+            cm730.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum, params);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
-        while (num < Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES) {
-            params[num++] = 0;
-        }
-        cm730.SyncWrite(Robot::MX28::P_D_GAIN, Robot::MX28::PARAM_BYTES, jointNum, params);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 //    while(true) {
 //        int params[Robot::JointData::NUMBER_OF_JOINTS * Robot::MX28::PARAM_BYTES];
