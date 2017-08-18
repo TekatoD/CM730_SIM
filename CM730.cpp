@@ -78,12 +78,12 @@ void Robot::CM730::init_devices() {
 
     //initialize sensors readings
     simxFloat h;
-    simxGetFloatSignal(m_client_id, "accelerometerX", &h, simx_opmode_streaming);
-    simxGetFloatSignal(m_client_id, "accelerometerY", &h, simx_opmode_streaming);
-    simxGetFloatSignal(m_client_id, "accelerometerZ", &h, simx_opmode_streaming);
-    simxGetFloatSignal(m_client_id, "gyroX", &h, simx_opmode_streaming);
-    simxGetFloatSignal(m_client_id, "gyroY", &h, simx_opmode_streaming);
-    simxGetFloatSignal(m_client_id, "gyroZ", &h, simx_opmode_streaming);
+    simxGetFloatSignal(m_client_id, (std::string("accelerometerX") + m_device_postfix).c_str(), &h, simx_opmode_streaming);
+    simxGetFloatSignal(m_client_id, (std::string("accelerometerY") + m_device_postfix).c_str(), &h, simx_opmode_streaming);
+    simxGetFloatSignal(m_client_id, (std::string("accelerometerZ") + m_device_postfix).c_str(), &h, simx_opmode_streaming);
+    simxGetFloatSignal(m_client_id, (std::string("gyroX") + m_device_postfix).c_str(), &h, simx_opmode_streaming);
+    simxGetFloatSignal(m_client_id, (std::string("gyroY") + m_device_postfix).c_str(), &h, simx_opmode_streaming);
+    simxGetFloatSignal(m_client_id, (std::string("gyroZ") + m_device_postfix).c_str(), &h, simx_opmode_streaming);
 
     //get joints handlers
     m_sim_devices.emplace(std::make_pair(JointData::ID_L_SHOULDER_PITCH, this->connect_device("j_shoulder_l" + m_device_postfix)));
@@ -145,22 +145,22 @@ int Robot::CM730::ReadWord(int id, int address, int* pValue, int* error) {
         };
         switch(address) {
             case P_GYRO_Z_L:
-                *pValue = norm_gyro(get_sensor_data("gyroZ"));
+                *pValue = norm_gyro(get_sensor_data("gyroZ" + m_device_postfix));
                 break;
             case P_GYRO_Y_L:
-                *pValue = norm_gyro(get_sensor_data("gyroY"));
+                *pValue = norm_gyro(get_sensor_data("gyroY" + m_device_postfix));
                 break;
             case P_GYRO_X_L:
-                *pValue = norm_gyro(get_sensor_data("gyroX"));
+                *pValue = norm_gyro(get_sensor_data("gyroX" + m_device_postfix));
                 break;
             case P_ACCEL_Z_L:
-                *pValue = norm_accel(get_sensor_data("accelerometerZ"));
+                *pValue = norm_accel(get_sensor_data("accelerometerZ" + m_device_postfix));
                 break;
             case P_ACCEL_Y_L:
-                *pValue = norm_accel(get_sensor_data("accelerometerY"));
+                *pValue = norm_accel(get_sensor_data("accelerometerY" + m_device_postfix));
                 break;
             case P_ACCEL_X_L:
-                *pValue = norm_accel(get_sensor_data("accelerometerX"));
+                *pValue = norm_accel(get_sensor_data("accelerometerX" + m_device_postfix));
                 break;
             default:
                 simxFloat pos;
@@ -169,7 +169,7 @@ int Robot::CM730::ReadWord(int id, int address, int* pValue, int* error) {
                 while((*error = simxGetJointPosition(m_client_id, m_sim_devices[address], &pos, simx_opmode_oneshot))
                       != simx_return_ok) { };
                 pos = (180 * pos) / M_PI;
-                std::cout << "Joint" << address << " " << pos << std::endl;
+//                std::cout << "Joint" << address << " " << pos << std::endl;
 //                *pValue = MX28::Angle2Value(pos);
                 return SUCCESS;
     }
