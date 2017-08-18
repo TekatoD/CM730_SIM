@@ -170,7 +170,7 @@ int Robot::CM730::ReadWord(int id, int address, int* pValue, int* error) {
                       != simx_return_ok) { };
                 pos = (180 * pos) / M_PI;
 //                std::cout << "Joint" << address << " " << pos << std::endl;
-//                *pValue = MX28::Angle2Value(pos);
+                *pValue = MX28::Angle2Value(pos);
                 return SUCCESS;
     }
 }
@@ -211,6 +211,14 @@ int Robot::CM730::WriteByte(int address, int value, int* error) {
 }
 
 int Robot::CM730::WriteWord(int id, int address, int value, int* error) {
+    if(address == MX28::P_PRESENT_POSITION_L) {
+        simxSetObjectIntParameter(m_client_id, m_sim_devices[id], 2000, 1, simx_opmode_oneshot);
+        simxSetObjectIntParameter(m_client_id, m_sim_devices[id], 2001, 1, simx_opmode_oneshot);
+        *error = simxSetJointTargetPosition(m_client_id, m_sim_devices[id],
+                                   (Robot::MX28::Value2Angle(value) * M_PI) / 180,
+                                   simx_opmode_oneshot);
+        return SUCCESS;
+    }
     return SUCCESS;
 }
 
