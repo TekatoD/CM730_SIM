@@ -112,7 +112,7 @@ void ComputeHeadForwardKinematics(float pan, float tilt) {
 }
 
 int main() {
-    Robot::CM730 cm730(-1, "#0");
+    Robot::CM730 cm730;
 //    Robot::CM730 cm7301(cm730.get_client_id(), "#0");
     int joint_to_test = 20;
     double angle = 30;
